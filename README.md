@@ -1,6 +1,24 @@
-# Project — Digital Heroes Full Stack Assessment (Task 02)
+# Digital Heroes Full Stack Assessment
 
-The assessment scaffold: server and client applications plus supporting infrastructure — input validation, a health-check endpoint, automated tests, CI, and Docker support.
+**Lead Management Platform**
+
+Built by: Atharva Sable
+Submission Date: 2026-07-25
+
+---
+
+## Project Overview
+
+This repository contains two assessment tasks, delivered as separate folders:
+
+| Folder | Description |
+|---|---|
+| [`TASK01_Lead-management-system`](./TASK01_Lead-management-system) | Lead Management System implementing the primary product features. |
+| [`project`](./project) | Digital Heroes Full Stack Assessment scaffold with supporting utilities — validation, health checks, CI, Docker, and docs. |
+
+Both projects are full-stack applications demonstrating secure authentication, a REST API for managing leads and users, and a React frontend for viewing and interacting with the system. The goal is a maintainable, testable, and deployable platform for lead capture and management.
+
+Each folder has its own detailed README — see [TASK01 README](./TASK01_Lead-management-system/README.md) and [project README](./project/README.md) for endpoint examples, setup, and env variables.
 
 ---
 
@@ -17,309 +35,127 @@ The assessment scaffold: server and client applications plus supporting infrastr
 - Search & Filters
 - Pagination
 - Responsive UI
-- Health check endpoint
-- Docker & docker-compose support
-- Automated tests (Vitest) and CI (GitHub Actions)
+- Health check endpoint & Docker support (`project`)
+- Automated tests & CI — Vitest + GitHub Actions (`project`)
 
 ---
 
 ## Tech Stack
 
-- **Frontend:** React, Vite, React Router, TailwindCSS
-- **Backend:** Node.js, Express, MongoDB (Mongoose)
-- **Auth:** JWT, bcrypt
-- **Testing:** Vitest, Supertest
-- **CI/CD:** GitHub Actions
-- **Containerization:** Docker, docker-compose
+**Frontend**
+- React, Vite
+- React Router
+- TailwindCSS (where used)
+
+**Backend**
+- Node.js, Express
+- MongoDB (Mongoose)
+
+**Authentication**
+- JWT
+- bcrypt (password hashing)
+
+**Testing**
+- Vitest (unit + integration)
+- Supertest (HTTP integration tests)
+
+**Dev / Deployment**
+- Docker & docker-compose
+- GitHub Actions (CI)
 
 ---
 
-## Project Structure
+## Database Schema
 
+### User
 ```
-project/
-├── server/          # Express API, models, routes, tests
-├── client/          # React + Vite frontend
-├── docker-compose.yml
-└── .github/workflows/  # CI pipeline
+id
+name
+email
+password
+role (admin|member)
+createdAt
+```
+
+### Lead
+```
+id
+name
+email
+phone
+company
+status
+assignedTo
+createdAt
+updatedAt
+```
+
+### Note
+```
+id
+leadId
+userId
+content
+createdAt
+```
+
+### Activity
+```
+id
+leadId
+action
+performedBy
+timestamp
 ```
 
 ---
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- MongoDB (local or Atlas), or use the provided Docker setup
-
-### Install
+## Quickstart
 
 ```bash
-cd project/server && npm install
+git clone <repo-url>
+cd digital01
+
+# Task 01
+cd TASK01_Lead-management-system/server && npm install
+cd ../client && npm install
+
+# Task 02 (project)
+cd ../../project/server && npm install
 cd ../client && npm install
 ```
 
-### Environment Variables
-
-`server/.env`:
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/digital_heroes
-JWT_SECRET=replace_with_a_strong_secret
-JWT_EXPIRES_IN=7d
-NODE_ENV=development
-```
-
-`client/.env`:
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
-```
-
-### Run (development)
+Run locally (development):
 
 ```bash
-# Server
+# Server (project)
 cd project/server
 npm run dev
 
-# Client
+# Client (project)
 cd project/client
 npm run dev
 ```
 
-### Run with Docker
-
-```bash
-cd project
-docker compose up --build
-```
-
-This starts the API, client, and MongoDB containers together.
-
----
-
-## API Documentation
-
-Base URL: `http://localhost:5000/api`
-
-### Health
-
-#### `GET /api/health`
-- **Auth required:** No
-
-Response `200 OK`:
-```json
-{ "status": "ok", "uptime": 45213, "db": "connected" }
-```
-
-Status codes: `200` OK · `503` Service unavailable (DB disconnected)
-
----
-
-### Auth
-
-#### `POST /api/auth/register`
-- **Auth required:** No
-
-Request:
-```json
-{
-  "name": "Alex Kim",
-  "email": "alex@example.com",
-  "password": "SecurePass123",
-  "role": "member"
-}
-```
-
-Response `201 Created`:
-```json
-{
-  "user": { "id": "64a1...", "name": "Alex Kim", "email": "alex@example.com", "role": "member" },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-Status codes: `201` Created · `400` Validation error · `409` Email already exists
-
----
-
-#### `POST /api/auth/login`
-- **Auth required:** No
-
-Request:
-```json
-{ "email": "alex@example.com", "password": "SecurePass123" }
-```
-
-Response `200 OK`:
-```json
-{
-  "user": { "id": "64a1...", "name": "Alex Kim", "role": "member" },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-Status codes: `200` OK · `400` Validation error · `401` Invalid credentials
-
----
-
-### Users
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/api/users` | Yes (admin) | List all users |
-| GET | `/api/users/:id` | Yes | Get a user's details |
-| PUT | `/api/users/:id` | Yes (self/admin) | Update a user |
-| DELETE | `/api/users/:id` | Yes (admin) | Delete a user |
-
-Example — `PUT /api/users/:id`:
-```json
-{ "name": "Alex T. Kim" }
-```
-Response `200 OK`:
-```json
-{ "id": "64a1...", "name": "Alex T. Kim", "email": "alex@example.com", "role": "member" }
-```
-
----
-
-### Leads
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/api/leads` | Yes | List leads (paginated, filterable) |
-| GET | `/api/leads/:id` | Yes | Get a single lead |
-| POST | `/api/leads` | No (public capture) | Create a lead |
-| PUT | `/api/leads/:id` | Yes | Update a lead |
-| PATCH | `/api/leads/:id/status` | Yes | Update lead status |
-| DELETE | `/api/leads/:id` | Yes (admin) | Delete a lead |
-| POST | `/api/leads/:id/notes` | Yes | Add a note to a lead |
-
-#### `GET /api/leads?page=2&limit=20&status=NEW&assignedTo=64a1...&search=john`
-
-Response `200 OK`:
-```json
-{
-  "items": [
-    {
-      "id": "64b2...",
-      "name": "John Rivera",
-      "email": "john@company.com",
-      "phone": "+1-555-0142",
-      "company": "Rivera Consulting",
-      "status": "NEW",
-      "assignedTo": "64a1...",
-      "createdAt": "2026-07-22T14:00:00.000Z",
-      "updatedAt": "2026-07-22T14:00:00.000Z"
-    }
-  ],
-  "total": 1,
-  "page": 2,
-  "limit": 20
-}
-```
-
-#### `POST /api/leads`
-
-Request:
-```json
-{
-  "name": "John Rivera",
-  "email": "john@company.com",
-  "phone": "+1-555-0142",
-  "company": "Rivera Consulting"
-}
-```
-
-Response `201 Created`: same shape as above, with `status: "NEW"` and `assignedTo: null`.
-
-Status codes: `201` Created · `400` Validation error
-
-#### `PATCH /api/leads/:id/status`
-
-Request:
-```json
-{ "status": "CONTACTED" }
-```
-
-Response `200 OK`:
-```json
-{ "id": "64b2...", "status": "CONTACTED", "updatedAt": "2026-07-25T09:40:00.000Z" }
-```
-
-Status codes: `200` OK · `400` Invalid status · `401` Unauthorized · `404` Not found
-
-#### `POST /api/leads/:id/notes`
-
-Request:
-```json
-{ "content": "Sent proposal, awaiting response." }
-```
-
-Response `201 Created`:
-```json
-{
-  "id": "64c3...",
-  "leadId": "64b2...",
-  "userId": "64a1...",
-  "content": "Sent proposal, awaiting response.",
-  "createdAt": "2026-07-25T09:42:00.000Z"
-}
-```
-
----
-
-## Pagination & Filtering
-
-```
-GET /api/leads?page=2&limit=20
-```
-- `page` — default `1`
-- `limit` — default `20`
-
-Filters:
-```
-status=NEW
-assignedTo=<userId>
-search=<text match on name/email/company>
-```
-
-Combine filters as needed: `?status=NEW&assignedTo=64a1...&search=john`
-
-Responses include pagination metadata: `total`, `page`, `limit`, `items`.
+Full setup, seed data, and environment variables are documented in each folder's README.
 
 ---
 
 ## Testing
 
 ```bash
-cd server
+# Server
+cd TASK01_Lead-management-system/server   # or project/server
 npm install
 npm test
 
-cd ../client
+# Client
+cd TASK01_Lead-management-system/client   # or project/client
 npm install
 npm test
 ```
 
-Test coverage:
-- Authentication
-- Role permissions
-- Lead creation
-- Lead assignment
-- Status updates
-- API health
-- Input validation
-
----
-
-## CI/CD
-
-GitHub Actions workflow (`.github/workflows/`) runs on push/PR:
-1. Install dependencies (server + client)
-2. Run lint (if configured)
-3. Run Vitest test suites
-4. Build client
+Key test scenarios covered: authentication, role permissions, lead creation, lead assignment, status updates, API health, input validation.
 
 ---
 
@@ -341,7 +177,12 @@ docker compose up --build
 
 ---
 
-## Notes
+## AI Usage
 
-- Keep `.env` files out of version control — use `.env.example` as the template for required variables.
-- The Docker Compose setup provisions a local MongoDB instance for convenience; point `MONGO_URI` at a managed instance for production.
+> AI tools were used for brainstorming architecture, reviewing API documentation, improving technical writing, and validating implementation ideas. All coding decisions, implementation, testing, debugging, and final deliverables were completed and reviewed by me.
+
+---
+
+## License
+
+This project was created for the Digital Heroes Full Stack Assessment and is not licensed for external distribution unless stated otherwise by the author.

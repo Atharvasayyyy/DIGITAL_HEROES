@@ -1,100 +1,347 @@
-# Digital Heroes Training Task B
+# Project — Digital Heroes Full Stack Assessment (Task 02)
 
-## Overview
-This project is a production-ready MERN application scaffold built for the Digital Heroes Training Task B. It includes a React frontend and Express backend with clean architecture, JWT authentication, and secure API structure.
+The assessment scaffold: server and client applications plus supporting infrastructure — input validation, a health-check endpoint, automated tests, CI, and Docker support.
+
+---
 
 ## Features
-- React frontend with routing and reusable components
-- Express backend with MVC + service + repository layers
-- JWT authentication and password hashing
-- Input validation and centralized error handling
-- Environment-based configuration
-- Production-ready structure for deployment
 
-## Folder Structure
-- `client/`: React application
-- `server/`: Express API server
-- `project/`: root project scaffold
+- Public Lead Capture Form
+- Secure Authentication (JWT)
+- Admin Dashboard
+- Member Dashboard
+- Role-based Access Control
+- Lead Assignment
+- Lead Status Pipeline
+- Notes & Activity Timeline
+- Search & Filters
+- Pagination
+- Responsive UI
+- Health check endpoint
+- Docker & docker-compose support
+- Automated tests (Vitest) and CI (GitHub Actions)
 
-## Technologies
-- Frontend: React, React Router, Axios
-- Backend: Node.js, Express, MongoDB, Mongoose
-- Security: Helmet, CORS, JWT, bcrypt
-- Tools: ESLint, Prettier, nodemon
+---
 
-## Installation
+## Tech Stack
+
+- **Frontend:** React, Vite, React Router, TailwindCSS
+- **Backend:** Node.js, Express, MongoDB (Mongoose)
+- **Auth:** JWT, bcrypt
+- **Testing:** Vitest, Supertest
+- **CI/CD:** GitHub Actions
+- **Containerization:** Docker, docker-compose
+
+---
+
+## Project Structure
+
+```
+project/
+├── server/          # Express API, models, routes, tests
+├── client/          # React + Vite frontend
+├── docker-compose.yml
+└── .github/workflows/  # CI pipeline
+```
+
+---
+
+## Getting Started
+
 ### Prerequisites
 - Node.js 18+
-- npm 10+
-- MongoDB Atlas or local MongoDB
+- MongoDB (local or Atlas), or use the provided Docker setup
 
-### Clone Repository
+### Install
+
 ```bash
-git clone <repo-url>
-cd project
+cd project/server && npm install
+cd ../client && npm install
 ```
 
-### Install Client
-```bash
-cd client
-npm install
+### Environment Variables
+
+`server/.env`:
+```env
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/digital_heroes
+JWT_SECRET=replace_with_a_strong_secret
+JWT_EXPIRES_IN=7d
+NODE_ENV=development
 ```
 
-### Install Server
-```bash
-cd ../server
-npm install
+`client/.env`:
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-### Configure .env
-Copy `.env.example` to `.env` and update values.
+### Run (development)
 
-### Run Development
 ```bash
-cd client
+# Server
+cd project/server
 npm run dev
-```
 
-```bash
-cd server
+# Client
+cd project/client
 npm run dev
-```
-
-### Run Tests
-```bash
-cd server
-npm test
-```
-
-```bash
-cd client
-npm test
 ```
 
 ### Run with Docker
+
 ```bash
+cd project
 docker compose up --build
 ```
 
-### Health Check
-Use the health check endpoint to verify the API is running:
-```bash
-curl http://localhost:5000/api/health
+This starts the API, client, and MongoDB containers together.
+
+---
+
+## API Documentation
+
+Base URL: `http://localhost:5000/api`
+
+### Health
+
+#### `GET /api/health`
+- **Auth required:** No
+
+Response `200 OK`:
+```json
+{ "status": "ok", "uptime": 45213, "db": "connected" }
 ```
 
-## API Endpoints
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/users`
-- `GET /api/users/:id`
-- `PUT /api/users/:id`
-- `DELETE /api/users/:id`
+Status codes: `200` OK · `503` Service unavailable (DB disconnected)
 
-## Future Improvements
-- Add tests with Jest
-- Add more user roles and permissions
-- Add UI components for user management
-- Deploy to Vercel and Render
+---
 
-## License
-MIT
+### Auth
+
+#### `POST /api/auth/register`
+- **Auth required:** No
+
+Request:
+```json
+{
+  "name": "Alex Kim",
+  "email": "alex@example.com",
+  "password": "SecurePass123",
+  "role": "member"
+}
+```
+
+Response `201 Created`:
+```json
+{
+  "user": { "id": "64a1...", "name": "Alex Kim", "email": "alex@example.com", "role": "member" },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+Status codes: `201` Created · `400` Validation error · `409` Email already exists
+
+---
+
+#### `POST /api/auth/login`
+- **Auth required:** No
+
+Request:
+```json
+{ "email": "alex@example.com", "password": "SecurePass123" }
+```
+
+Response `200 OK`:
+```json
+{
+  "user": { "id": "64a1...", "name": "Alex Kim", "role": "member" },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+Status codes: `200` OK · `400` Validation error · `401` Invalid credentials
+
+---
+
+### Users
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/users` | Yes (admin) | List all users |
+| GET | `/api/users/:id` | Yes | Get a user's details |
+| PUT | `/api/users/:id` | Yes (self/admin) | Update a user |
+| DELETE | `/api/users/:id` | Yes (admin) | Delete a user |
+
+Example — `PUT /api/users/:id`:
+```json
+{ "name": "Alex T. Kim" }
+```
+Response `200 OK`:
+```json
+{ "id": "64a1...", "name": "Alex T. Kim", "email": "alex@example.com", "role": "member" }
+```
+
+---
+
+### Leads
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/leads` | Yes | List leads (paginated, filterable) |
+| GET | `/api/leads/:id` | Yes | Get a single lead |
+| POST | `/api/leads` | No (public capture) | Create a lead |
+| PUT | `/api/leads/:id` | Yes | Update a lead |
+| PATCH | `/api/leads/:id/status` | Yes | Update lead status |
+| DELETE | `/api/leads/:id` | Yes (admin) | Delete a lead |
+| POST | `/api/leads/:id/notes` | Yes | Add a note to a lead |
+
+#### `GET /api/leads?page=2&limit=20&status=NEW&assignedTo=64a1...&search=john`
+
+Response `200 OK`:
+```json
+{
+  "items": [
+    {
+      "id": "64b2...",
+      "name": "John Rivera",
+      "email": "john@company.com",
+      "phone": "+1-555-0142",
+      "company": "Rivera Consulting",
+      "status": "NEW",
+      "assignedTo": "64a1...",
+      "createdAt": "2026-07-22T14:00:00.000Z",
+      "updatedAt": "2026-07-22T14:00:00.000Z"
+    }
+  ],
+  "total": 1,
+  "page": 2,
+  "limit": 20
+}
+```
+
+#### `POST /api/leads`
+
+Request:
+```json
+{
+  "name": "John Rivera",
+  "email": "john@company.com",
+  "phone": "+1-555-0142",
+  "company": "Rivera Consulting"
+}
+```
+
+Response `201 Created`: same shape as above, with `status: "NEW"` and `assignedTo: null`.
+
+Status codes: `201` Created · `400` Validation error
+
+#### `PATCH /api/leads/:id/status`
+
+Request:
+```json
+{ "status": "CONTACTED" }
+```
+
+Response `200 OK`:
+```json
+{ "id": "64b2...", "status": "CONTACTED", "updatedAt": "2026-07-25T09:40:00.000Z" }
+```
+
+Status codes: `200` OK · `400` Invalid status · `401` Unauthorized · `404` Not found
+
+#### `POST /api/leads/:id/notes`
+
+Request:
+```json
+{ "content": "Sent proposal, awaiting response." }
+```
+
+Response `201 Created`:
+```json
+{
+  "id": "64c3...",
+  "leadId": "64b2...",
+  "userId": "64a1...",
+  "content": "Sent proposal, awaiting response.",
+  "createdAt": "2026-07-25T09:42:00.000Z"
+}
+```
+
+---
+
+## Pagination & Filtering
+
+```
+GET /api/leads?page=2&limit=20
+```
+- `page` — default `1`
+- `limit` — default `20`
+
+Filters:
+```
+status=NEW
+assignedTo=<userId>
+search=<text match on name/email/company>
+```
+
+Combine filters as needed: `?status=NEW&assignedTo=64a1...&search=john`
+
+Responses include pagination metadata: `total`, `page`, `limit`, `items`.
+
+---
+
+## Testing
+
+```bash
+cd server
+npm install
+npm test
+
+cd ../client
+npm install
+npm test
+```
+
+Test coverage:
+- Authentication
+- Role permissions
+- Lead creation
+- Lead assignment
+- Status updates
+- API health
+- Input validation
+
+---
+
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/`) runs on push/PR:
+1. Install dependencies (server + client)
+2. Run lint (if configured)
+3. Run Vitest test suites
+4. Build client
+
+---
+
+## Deployment
+
+```bash
+# Build client
+cd project/client
+npm run build
+
+# Run server
+cd project/server
+npm start
+
+# Or with Docker
+cd project
+docker compose up --build
+```
+
+---
+
+## Notes
+
+- Keep `.env` files out of version control — use `.env.example` as the template for required variables.
+- The Docker Compose setup provisions a local MongoDB instance for convenience; point `MONGO_URI` at a managed instance for production.

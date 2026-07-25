@@ -1,0 +1,23 @@
+{
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "extends": ["eslint:recommended", "plugin:node/recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "settings": {
+    "node": {
+      "version": "18",
+      "tryExtensions": [".js", ".json", ".node"],
+      "allowModules": ["vitest", "supertest"]
+    }
+  },
+  "rules": {
+    "no-console": "off",
+    "node/no-unsupported-features/es-syntax": "off",
+    "node/no-unpublished-import": "off"
+  }
+}
